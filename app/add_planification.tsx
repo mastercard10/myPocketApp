@@ -1,4 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+﻿import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -18,6 +18,7 @@ import {
   Text,
   TextInput,
   useTheme,
+  Switch,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -31,6 +32,8 @@ interface Transaction {
   category: string;
   description: string;
   date: string;
+  isPlanned?: boolean;
+  plannedMonth?: string;
 }
 
 const createId = () =>
@@ -40,6 +43,7 @@ const AddTransactionScreen = () => {
   const GREEN = "#10B981";
   const RED = "#EF4444";
   const BLUE = "#3B82F6";
+  const ORANGE = "#F59E0B";
 
   const theme = useTheme();
   const params = useLocalSearchParams();
@@ -59,6 +63,7 @@ const AddTransactionScreen = () => {
   const [amount, setAmount] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [isPlanned, setIsPlanned] = useState(false);
 
   useEffect(() => {
     if (editMode && existingTransaction) {
@@ -70,6 +75,7 @@ const AddTransactionScreen = () => {
       );
       setSelectedCategory((existingTransaction.category || "").toLowerCase());
       setDescription(existingTransaction.description || "");
+      setIsPlanned(existingTransaction.isPlanned || false);
     }
   }, [editMode, existingTransaction]);
 
@@ -104,6 +110,17 @@ const AddTransactionScreen = () => {
     },
   ];
 
+  const getNextMonth = () => {
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return nextMonth.toISOString().split('T')[0]; // Format YYYY-MM
+  };
+
+  const getMonthName = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  };
+
   const handleSave = async () => {
     if (!amount.trim() || !selectedCategory) {
       Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires");
@@ -137,7 +154,9 @@ const AddTransactionScreen = () => {
       amount: Math.abs(parsedAmount),
       category: selectedCategory.toLowerCase(),
       description: (description || "").trim(),
-      date: dateISO,
+      date: isPlanned ? new Date().toISOString() : dateISO, // Pour les dépenses planifiées, on utilise la date actuelle mais on marque comme planifié
+      isPlanned: isPlanned,
+      plannedMonth: isPlanned ? getNextMonth() : undefined,
     };
 
     try {
@@ -166,11 +185,29 @@ const AddTransactionScreen = () => {
       );
 
       await AsyncStorage.setItem("transactions", JSON.stringify(arr));
-      router.back();
+
+      if (isPlanned) {
+        Alert.alert(
+          "Dépense planifiée",
+          `Votre dépense a été planifiée pour ${getMonthName(getNextMonth())}`,
+          [{ text: "OK", onPress: () => router.push("/planifications")}]
+        );
+      } else {
+        router.back();
+      }
     } catch (e) {
       console.error("Erreur lors de la sauvegarde:", e);
       Alert.alert("Erreur", "Impossible de sauvegarder la transaction");
     }
+  };
+
+  const getButtonText = () => {
+    if (isPlanned) {
+      return transactionType === "Dépense"
+        ? `Planifier pour ${getMonthName(getNextMonth())}`
+        : `Planifier le revenu pour ${getMonthName(getNextMonth())}`;
+    }
+    return editMode ? "Modifier" : "Ajouter la transaction";
   };
 
   return (
@@ -188,7 +225,7 @@ const AddTransactionScreen = () => {
           onPress={() => router.back()}
         />
         <Appbar.Content
-          title="Nouvelle transaction"
+          title={editMode ? "Modifier" : "Nouvelle transaction"}
           titleStyle={{
             fontSize: 18,
             fontWeight: "600",
@@ -242,6 +279,32 @@ const AddTransactionScreen = () => {
             />
           </View>
 
+          {/* Planification */}
+          {transactionType === "Dépense" && (
+            <View style={styles.section}>
+              <View style={styles.planningRow}>
+                <View style={styles.planningTextContainer}>
+                  <Icon name="calendar-clock" size={24} color={ORANGE} />
+                  <View style={styles.planningText}>
+                    <Text style={styles.planningTitle}>Planifier pour le mois prochain</Text>
+                    <Text style={styles.planningSubtitle}>
+                      {isPlanned
+                        ? `Dépense planifiée pour ${getMonthName(getNextMonth())}`
+                        : "Ajouter cette dépense au budget du mois prochain"
+                      }
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={isPlanned}
+                  onValueChange={setIsPlanned}
+                  color={ORANGE}
+                />
+              </View>
+              <View style={styles.divider} />
+            </View>
+          )}
+
           {/* Montant */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Montant *</Text>
@@ -280,10 +343,9 @@ const AddTransactionScreen = () => {
                         <View style={styles.divider} />
                       </View>
 
-
           {/* Catégories */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Catégorie</Text>
+            <Text style={styles.sectionTitle}>Catégorie *</Text>
             <View style={styles.categoriesGrid}>
               {categories.map((category) => (
                 <View key={category.id} style={styles.categoryItem}>
@@ -323,11 +385,12 @@ const AddTransactionScreen = () => {
             onPress={handleSave}
             contentStyle={styles.saveButtonContent}
             style={styles.saveButton}
-            buttonColor={BLUE}
+            buttonColor={isPlanned ? ORANGE : BLUE}
             labelStyle={styles.saveButtonLabel}
             disabled={!amount || !selectedCategory}
+            icon={isPlanned ? "calendar-check" : "check"}
           >
-            Ajouter la transaction
+            {getButtonText()}
           </Button>
         </View>
       </KeyboardAvoidingView>
@@ -358,6 +421,31 @@ const styles = StyleSheet.create({
   },
   segmentedButtons: {
     borderRadius: 8,
+  },
+  planningRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  planningTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  planningText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  planningTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 2,
+  },
+  planningSubtitle: {
+    fontSize: 14,
+    color: "#666",
   },
   amountInput: {
     backgroundColor: 'transparent',
@@ -404,7 +492,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   spacer: {
-    height: 100, // Espace pour le bouton fixe
+    height: 100,
   },
   buttonContainer: {
     position: 'absolute',

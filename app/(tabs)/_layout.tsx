@@ -21,9 +21,17 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: Colors[colorScheme ?? 'light'].background,
           borderTopWidth: 2,
-          height: 80, // Augmentez ou diminuez cette valeur selon vos besoins
-          paddingBottom: 10, // Ajuster l'espacement interne
-          paddingTop: 10,
+          height: '8%', // Augmentez ou diminuez cette valeur selon vos besoins
+          bottom: '3%', // Ajuster l'espacement interne
+        //  paddingTop: 10,
+          elevation: 0,
+              shadowColor: '#000',
+              shadowOffset: {
+                width: 0,
+                height: 3,
+              },
+              shadowOpacity: 0.27,
+              shadowRadius: 4.65,
         },
         tabBarLabelStyle: {
           fontSize: 14, // Taille de la police
@@ -48,6 +56,16 @@ export default function TabLayout() {
           ),
         }}
       />
-    </Tabs>
+
+    <Tabs.Screen
+            name="planifications"
+            options={{
+              title: "Planifications",
+              tabBarIcon: ({ color, size }) => (
+                <Icon name="trending-up" size={size} color={color} />
+              ),
+            }}
+          />
+        </Tabs>
   );
 }

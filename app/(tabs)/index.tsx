@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -10,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 interface Transaction {
@@ -33,7 +33,7 @@ const ExpenseDashboard = () => {
   const loadTransactions = async () => {
     try {
       const stored = await AsyncStorage.getItem('transactions');
-      console.log('Données chargées:', stored); // Debug
+    //  console.log('Données chargées:', stored); // Debug
       
       if (stored) {
         const transactions: Transaction[] = JSON.parse(stored);
@@ -270,13 +270,13 @@ const ExpenseDashboard = () => {
       </ScrollView>
 
       {/* Floating Action Button */}
-      <TouchableOpacity 
+    {/*  <TouchableOpacity
         style={styles.fab} 
         onPress={() => router.push('/add_transaction')}
         activeOpacity={0.8}
       >
         <Icon name="add" size={24} color="#ffffff" />
-      </TouchableOpacity>
+      </TouchableOpacity>*/}
     </SafeAreaView>
   );
 };
@@ -286,6 +286,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#ffffff',
+    paddingTop: 20,
+    paddingVertical: 20,
   },
   header: {
     backgroundColor: '#ffffff',
@@ -441,7 +443,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 20,
+    bottom: '15%',
     right: 20,
     width: 56,
     height: 56,
