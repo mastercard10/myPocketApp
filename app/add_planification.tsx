@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Pressable,
 } from "react-native";
 import {
   Appbar,
@@ -75,7 +76,7 @@ const AddTransactionScreen = () => {
       );
       setSelectedCategory((existingTransaction.category || "").toLowerCase());
       setDescription(existingTransaction.description || "");
-      setIsPlanned(existingTransaction.isPlanned || false);
+      setIsPlanned(existingTransaction.isPlanned || true);
     }
   }, [editMode, existingTransaction]);
 
@@ -155,12 +156,14 @@ const AddTransactionScreen = () => {
       category: selectedCategory.toLowerCase(),
       description: (description || "").trim(),
       date: isPlanned ? new Date().toISOString() : dateISO, // Pour les dépenses planifiées, on utilise la date actuelle mais on marque comme planifié
-      isPlanned: isPlanned,
-      plannedMonth: isPlanned ? getNextMonth() : undefined,
+      isPlanned: true,
+      plannedMonth: getNextMonth() // Pour les dépenses planifiées, on utilise le mois prochain,
     };
 
+  //  console.log("Transaction sauvegardée:", tx);
+
     try {
-      const raw = await AsyncStorage.getItem("transactions");
+      const raw = await AsyncStorage.getItem("planifiedTransactions");
       let arr: any[] = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(arr)) arr = [arr];
 
@@ -184,7 +187,7 @@ const AddTransactionScreen = () => {
         (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
       );
 
-      await AsyncStorage.setItem("transactions", JSON.stringify(arr));
+      await AsyncStorage.setItem("planifiedTransactions", JSON.stringify(arr));
 
       if (isPlanned) {
         Alert.alert(
@@ -210,6 +213,16 @@ const AddTransactionScreen = () => {
     return editMode ? "Modifier" : "Ajouter la transaction";
   };
 
+const getButtonStyle = (type: TxType) => {
+  const isActive = transactionType === type;
+  const backgroundColor = isActive
+    ? (type === "Dépense" ? RED : GREEN)
+    : '#fff';
+  const textColor = isActive ? '#fff' : '#000';
+
+  return { backgroundColor, textColor };
+};
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Appbar.Header
@@ -225,7 +238,7 @@ const AddTransactionScreen = () => {
           onPress={() => router.back()}
         />
         <Appbar.Content
-          title={editMode ? "Modifier" : "Nouvelle transaction"}
+          title={editMode ? "Modifier" : "Nouvelle planification"}
           titleStyle={{
             fontSize: 18,
             fontWeight: "600",
@@ -248,7 +261,25 @@ const AddTransactionScreen = () => {
           {/* Type de transaction */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Type de transaction</Text>
-            <SegmentedButtons
+
+            <View style={styles.buttonContainer}>
+              {["Dépense", "Revenu"].map((type) => {
+                const { backgroundColor, textColor } = getButtonStyle(type as TxType);
+
+                return (
+                  <Pressable
+                    key={type}
+                    style={[styles.button, { backgroundColor }]}
+                    onPress={() => setTransactionType(type as TxType)}
+                  >
+                    <Text style={[styles.buttonText, { color: textColor }]}>
+                      {type}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+        {/*    <SegmentedButtons
               value={transactionType}
               onValueChange={(value) => setTransactionType(value as TxType)}
               buttons={[
@@ -276,11 +307,11 @@ const AddTransactionScreen = () => {
                 },
               ]}
               style={styles.segmentedButtons}
-            />
+            />*/}
           </View>
 
           {/* Planification */}
-          {transactionType === "Dépense" && (
+      {/*    {transactionType === "Dépense" && (
             <View style={styles.section}>
               <View style={styles.planningRow}>
                 <View style={styles.planningTextContainer}>
@@ -303,7 +334,7 @@ const AddTransactionScreen = () => {
               </View>
               <View style={styles.divider} />
             </View>
-          )}
+          )}*/}
 
           {/* Montant */}
           <View style={styles.section}>
@@ -379,7 +410,7 @@ const AddTransactionScreen = () => {
         </ScrollView>
 
         {/* Bouton fixe en bas */}
-        <View style={styles.buttonContainer}>
+        <View style={styles.buttonCont}>
           <Button
             mode="contained"
             onPress={handleSave}
@@ -392,6 +423,11 @@ const AddTransactionScreen = () => {
           >
             {getButtonText()}
           </Button>
+      {/*    <Pressable onPress={handleSave} style={styles.saveButtonContent}>
+            <Text style={styles.saveButtonLabel}>Sauvegarder</Text>
+          </Pressable>*/}
+        />
+
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -402,6 +438,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    bottom:50,
   },
   scrollView: {
     flex: 1,
@@ -494,7 +531,7 @@ const styles = StyleSheet.create({
   spacer: {
     height: 100,
   },
-  buttonContainer: {
+  buttonCont: {
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -518,6 +555,38 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#fff",
   },
+  buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginVertical: 10,
+    },
+    button: {
+      flex: 1,
+      padding: 15,
+      marginHorizontal: 5,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: '#ddd',
+    },
+    expenseButton: {
+      backgroundColor: '#fff',
+    },
+    incomeButton: {
+      backgroundColor: '#fff',
+    },
+    activeButton: {
+      borderWidth: 0,
+    },
+    buttonText: {
+      fontSize: 16,
+      fontWeight: '500',
+    },
+    activeButtonText: {
+      color: '#fff',
+      fontWeight: 'bold',
+    },
 });
 
 export default AddTransactionScreen;

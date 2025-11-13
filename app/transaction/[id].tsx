@@ -7,6 +7,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/MaterialIcons";
@@ -97,6 +98,45 @@ const TransactionDetailScreen = () => {
 
   const isExpense = transaction.type === "Dépense";
 
+  const deleteTransaction = async (transactionId: string) => {
+          Alert.alert(
+            "Supprimer",
+            "Voulez-vous vraiment supprimer cette transaction?",
+            [
+              { text: "Annuler", style: "cancel" },
+              {
+                text: "Supprimer",
+                style: "destructive",
+                onPress: async () => {
+                  try {
+                /*   const raw = await AsyncStorage.getItem("transactions");
+                    let transactions: Transaction[] = raw ? JSON.parse(raw) : [];
+
+                    transactions = transactions.filter(
+                      (tx) => tx.id !== transactionId
+                    );
+                    await AsyncStorage.setItem(
+                      "transactions",
+                      JSON.stringify(transactions)
+                    );
+                    await loadPlannedTransactions();*/
+
+                    const stored = await AsyncStorage.getItem("transactions");
+                          const arr: Transaction[] = stored ? JSON.parse(stored) : [];
+                          const updated = arr.filter(
+                            (t) => String(t.id) !== String(transaction.id)
+                          );
+                          await AsyncStorage.setItem("transactions", JSON.stringify(updated));
+                          router.back();
+                  } catch (error) {
+                    Alert.alert("Erreur", "Impossible de supprimer la transaction"+error);
+                  }
+                },
+              },
+            ]
+          );
+        };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#ffffff" barStyle="dark-content" />
@@ -126,7 +166,7 @@ const TransactionDetailScreen = () => {
 
       {/* Infos */}
       <View style={styles.card}>
-        <Row icon="title" label="Titre" value={transaction.title} />
+      {/*  <Row icon="title" label="Titre" value={transaction.title} />*/}
         <Row icon="category" label="Catégorie" value={transaction.category} />
         <Row icon="event" label="Date" value={formatDate(transaction.date)} />
         <Row
@@ -138,56 +178,28 @@ const TransactionDetailScreen = () => {
       </View>
 
       {/* Actions */}
-      {!confirm ? (
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.editBtn]}
-            onPress={editTransaction}
-          >
-            <Icon name="edit" size={20} color="#1E88E5" />
-            <Text style={[styles.actionText, { color: "#1E88E5" }]}>
-              Modifier
-            </Text>
-          </TouchableOpacity>
-         {/*  <TouchableOpacity
-            style={[styles.actionBtn, styles.deleteBtn]}
-            onPress={() => setConfirm(true)}
-          >
-            <Icon name="delete" size={20} color="#E53935" />
-            <Text style={[styles.actionText, { color: "#E53935" }]}>
-              Supprimer
-            </Text>
-          </TouchableOpacity> */}
-          <Button
-              mode="text"
-              compact
-              textColor="#EF4444"
-              onPress={() => deletePlannedTransaction(transaction.id)}
-              style={styles.actionButton}
-              >
-              Supprimer
-              </Button>
-        </View>
-      ) : (
-        <View style={styles.confirmBar}>
-          <Icon name="warning-amber" size={18} color="#D32F2F" />
-          <Text style={styles.confirmText}>Confirmer la suppression ?</Text>
-          <TouchableOpacity
-            style={[styles.confirmPill, { backgroundColor: "#F0F0F0" }]}
-            onPress={() => setConfirm(false)}
-          >
-            <Text style={{ color: "#555" }}>Annuler</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.confirmPill, { backgroundColor: "#FFEBEE" }]}
-            onPress={deleteAndGoBack}
-          >
-            <Text style={{ color: "#D32F2F", fontWeight: "700" }}>
-              Supprimer
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      <View style={styles.actions}>
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.editBtn]}
+                  onPress={editTransaction}
+                >
+                  <Icon name="edit" size={20} color="#1E88E5" />
+                  <Text style={[styles.actionText, { color: "#1E88E5" }]}>
+                    Modifier
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.deleteBtn]}
+                //  onPress={() => setConfirm(true)}
+                    onPress={() => deleteTransaction(transaction.id)}
+                >
+                  <Icon name="delete" size={20} color="#E53935" />
+                  <Text style={[styles.actionText, { color: "#E53935" }]}>
+                    Supprimer
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
     </SafeAreaView>
   );
 };

@@ -1,20 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  Alert,
-} from "react-native";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import {
   Appbar,
+  Button,
   Card,
+  Chip,
   FAB,
   Text,
-  Button,
   useTheme,
-  Chip,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -33,7 +28,9 @@ interface Transaction {
 
 const PlannedTransactionsScreen = () => {
   const theme = useTheme();
-  const [plannedTransactions, setPlannedTransactions] = useState<Transaction[]>([]);
+  const [plannedTransactions, setPlannedTransactions] = useState<Transaction[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
 
   const categories = [
@@ -42,17 +39,29 @@ const PlannedTransactionsScreen = () => {
     { id: "nourriture", name: "Nourriture", icon: "food", color: "#EF4444" },
     { id: "transport", name: "Transport", icon: "car", color: "#6366F1" },
     { id: "logement", name: "Logement", icon: "home", color: "#8B5CF6" },
-    { id: "loisirs", name: "Loisirs", icon: "gamepad-variant", color: "#EC4899" },
+    {
+      id: "loisirs",
+      name: "Loisirs",
+      icon: "gamepad-variant",
+      color: "#EC4899",
+    },
     { id: "sante", name: "Santé", icon: "hospital", color: "#06B6D4" },
-    { id: "autre", name: "Autre", icon: "dots-horizontal-circle", color: "#6B7280" },
+    {
+      id: "autre",
+      name: "Autre",
+      icon: "dots-horizontal-circle",
+      color: "#6B7280",
+    },
   ];
 
   const loadPlannedTransactions = async () => {
     try {
-      const raw = await AsyncStorage.getItem("transactions");
+      const raw = await AsyncStorage.getItem("planifiedTransactions");
       const transactions: Transaction[] = raw ? JSON.parse(raw) : [];
 
-      const planned = transactions.filter(tx => tx.isPlanned && tx.type === "Dépense");
+      const planned = transactions.filter(
+        (tx) => tx.isPlanned && tx.type === "Dépense"
+      );
 
       // Grouper par mois
       const groupedByMonth = planned.reduce((acc, transaction) => {
@@ -72,7 +81,10 @@ const PlannedTransactionsScreen = () => {
       setPlannedTransactions(sortedTransactions);
     } catch (error) {
       console.error("Erreur lors du chargement:", error);
-      Alert.alert("Erreur", "Impossible de charger les transactions planifiées");
+      Alert.alert(
+        "Erreur",
+        "Impossible de charger les transactions planifiées"
+      );
     } finally {
       setLoading(false);
     }
@@ -84,22 +96,25 @@ const PlannedTransactionsScreen = () => {
 
   const getMonthName = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    return date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   };
 
   const getCategory = (categoryId: string) => {
-    return categories.find(cat => cat.id === categoryId) || categories[categories.length - 1];
+    return (
+      categories.find((cat) => cat.id === categoryId) ||
+      categories[categories.length - 1]
+    );
   };
 
   const getTotalForMonth = (month: string) => {
     return plannedTransactions
-      .filter(tx => tx.plannedMonth === month)
+      .filter((tx) => tx.plannedMonth === month)
       .reduce((total, tx) => total + tx.amount, 0);
   };
 
   const convertToActualTransaction = async (transaction: Transaction) => {
     try {
-      const raw = await AsyncStorage.getItem("transactions");
+      const raw = await AsyncStorage.getItem("planifiedTransactions");
       let transactions: Transaction[] = raw ? JSON.parse(raw) : [];
 
       // Mettre à jour la transaction pour la rendre actuelle
@@ -107,10 +122,10 @@ const PlannedTransactionsScreen = () => {
         ...transaction,
         isPlanned: false,
         plannedMonth: undefined,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
       };
 
-      transactions = transactions.map(tx =>
+      transactions = transactions.map((tx) =>
         tx.id === transaction.id ? updatedTransaction : tx
       );
 
@@ -134,23 +149,30 @@ const PlannedTransactionsScreen = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              const raw = await AsyncStorage.getItem("transactions");
+              const raw = await AsyncStorage.getItem("planifiedTransactions");
               let transactions: Transaction[] = raw ? JSON.parse(raw) : [];
 
-              transactions = transactions.filter(tx => tx.id !== transactionId);
-              await AsyncStorage.setItem("transactions", JSON.stringify(transactions));
+              transactions = transactions.filter(
+                (tx) => tx.id !== transactionId
+              );
+              await AsyncStorage.setItem(
+                "planifiedTransactions",
+                JSON.stringify(transactions)
+              );
               await loadPlannedTransactions();
             } catch (error) {
               Alert.alert("Erreur", "Impossible de supprimer la transaction");
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
   const getUniqueMonths = () => {
-    const months = plannedTransactions.map(tx => tx.plannedMonth).filter(Boolean) as string[];
+    const months = plannedTransactions
+      .map((tx) => tx.plannedMonth)
+      .filter(Boolean) as string[];
     return [...new Set(months)].sort();
   };
 
@@ -170,10 +192,11 @@ const PlannedTransactionsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Appbar.Header>
-        <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Dépenses Planifiées" />
-       {/* <Appbar.Action
+      <Appbar.Header  mode="small"
+                              style={{ backgroundColor: theme.colors.secondary }}>
+        <Appbar.BackAction onPress={() => router.back()} color="#fff" />
+        <Appbar.Content title="Dépenses Planifiées" titleStyle={{ color: "#fff" }}/>
+        {/* <Appbar.Action
           icon="plus"
           onPress={() => router.push("/add_planification")}
         />*/}
@@ -197,7 +220,7 @@ const PlannedTransactionsScreen = () => {
           </View>
         ) : (
           <View style={styles.content}>
-            {getUniqueMonths().map(month => (
+            {getUniqueMonths().map((month) => (
               <View key={month} style={styles.monthSection}>
                 <View style={styles.monthHeader}>
                   <Text style={styles.monthTitle}>{getMonthName(month)}</Text>
@@ -207,8 +230,8 @@ const PlannedTransactionsScreen = () => {
                 </View>
 
                 {plannedTransactions
-                  .filter(tx => tx.plannedMonth === month)
-                  .map(transaction => {
+                  .filter((tx) => tx.plannedMonth === month)
+                  .map((transaction) => {
                     const category = getCategory(transaction.category);
                     return (
                       <Card key={transaction.id} style={styles.transactionCard}>
@@ -220,8 +243,14 @@ const PlannedTransactionsScreen = () => {
                               </Text>
                               <Chip
                                 mode="outlined"
-                                style={[styles.categoryChip, { borderColor: category.color }]}
-                                textStyle={{ color: category.color, fontSize: 12 }}
+                                style={[
+                                  styles.categoryChip,
+                                  { borderColor: category.color },
+                                ]}
+                                textStyle={{
+                                  color: category.color,
+                                  fontSize: 12,
+                                }}
                               >
                                 {category.name}
                               </Chip>
@@ -242,7 +271,9 @@ const PlannedTransactionsScreen = () => {
                               mode="outlined"
                               compact
                               textColor="green"
-                              onPress={() => convertToActualTransaction(transaction)}
+                              onPress={() =>
+                                convertToActualTransaction(transaction)
+                              }
                               style={styles.actionButton}
                             >
                               Marquer comme actuelle
@@ -251,7 +282,9 @@ const PlannedTransactionsScreen = () => {
                               mode="text"
                               compact
                               textColor="#EF4444"
-                              onPress={() => deletePlannedTransaction(transaction.id)}
+                              onPress={() =>
+                                deletePlannedTransaction(transaction.id)
+                              }
                               style={styles.actionButton}
                             >
                               Supprimer
@@ -268,12 +301,12 @@ const PlannedTransactionsScreen = () => {
       </ScrollView>
 
       {/* FAB */}
-            <FAB
-              icon="plus"
-              color="#fff"
-              style={[styles.fab, { backgroundColor: theme.colors.secondary }]}
-              onPress={() => router.push("/add_planification")}
-            />
+      <FAB
+        icon="plus"
+        color="#fff"
+        style={[styles.fab, { backgroundColor: theme.colors.secondary }]}
+        onPress={() => router.push("/add_planification")}
+      />
     </SafeAreaView>
   );
 };
@@ -356,8 +389,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   categoryChip: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'transparent',
+    alignSelf: "flex-start",
+    backgroundColor: "transparent",
   },
   amount: {
     fontSize: 16,
@@ -379,10 +412,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   fab: {
-      position: "absolute",
-      bottom: '5%',
-      right: 24,
-    },
+    position: "absolute",
+    bottom: "5%",
+    right: 24,
+  },
 });
 
 export default PlannedTransactionsScreen;

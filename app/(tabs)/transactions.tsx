@@ -10,17 +10,10 @@ import {
   UIManager,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { RectButton, Swipeable } from "react-native-gesture-handler";
+import { Appbar, Button, Card, FAB, Text, useTheme } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import {
-  Appbar,
-  Button,
-  Card,
-  FAB,
-  Text,
-  useTheme,
-} from "react-native-paper";
 
 interface Transaction {
   id: string;
@@ -188,7 +181,12 @@ export default function TransactionsListScreen() {
     );
 
     return (
-      <Card style={styles.card} onPress={() => router.push(`/transaction/${t.id}`)}>
+      <Card
+         key={t.id}
+         style={styles.card}
+         onPress={() => router.push('/transaction/'+t.id)}
+      >
+
         <Swipeable
           ref={swipeRef}
           renderLeftActions={LeftActions}
@@ -197,14 +195,21 @@ export default function TransactionsListScreen() {
           overshootRight={false}
         >
           <Card.Content style={styles.transactionItem}>
-            <View style={[styles.iconContainer, { backgroundColor: `${color}20` }]}>
-              <Icon name={icon} size={22} color={color} />
+            <View
+              style={[styles.iconContainer, { backgroundColor: `${color}20` }]}
+            >
+              <Icon name={icon} size={18} color={color} />
             </View>
 
             <View style={{ flex: 1 }}>
               <Text variant="titleMedium" style={styles.title}>
                 {t.title}
               </Text>
+
+              <Text variant="titleSmall" style={{ color: "#757575" }}>
+                {t.description}
+              </Text>
+
               <Text variant="bodySmall" style={{ color: "#757575" }}>
                 {t.category.charAt(0).toUpperCase() + t.category.slice(1)} •{" "}
                 {formatDate(t.date)}
@@ -231,8 +236,11 @@ export default function TransactionsListScreen() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <Appbar.Header mode="small" style={{ backgroundColor: theme.colors.primary }}>
-      <Appbar.Action
+      <Appbar.Header
+        mode="small"
+        style={{ backgroundColor: theme.colors.primary }}
+      >
+        <Appbar.Action
           icon="arrow-left"
           color="#fff"
           onPress={() => router.back()}
@@ -246,7 +254,10 @@ export default function TransactionsListScreen() {
           />*/}
       </Appbar.Header>
 
-      <StatusBar backgroundColor={theme.colors.primary} barStyle="light-content" />
+      <StatusBar
+        backgroundColor={theme.colors.primary}
+        barStyle="light-content"
+      />
 
       {/* Filtres */}
       <View style={styles.filtersContainer}>
@@ -271,7 +282,6 @@ export default function TransactionsListScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
           showsVerticalScrollIndicator={false}
         />
-
       ) : (
         <View style={styles.empty}>
           <Icon name="receipt-long" size={64} color="#D0D0D0" />
@@ -340,7 +350,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    bottom: '5%',
+    bottom: "5%",
     right: 24,
   },
 });
